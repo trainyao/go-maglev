@@ -15,16 +15,25 @@ type Table struct {
 	n            int
 	lookup       []int
 	permutations [][]uint64
+	offsets      []uint64
+	skips        []uint64
+	m            uint64
 }
 
 func New(names []string, m uint64) *Table {
-	permutations := generatePermutations(names, m)
-	lookup := populate(permutations, nil)
-	return &Table{
-		n:            len(names),
-		lookup:       lookup,
-		permutations: permutations,
+	offsets, skips := generatePermutations(names, m)
+	t := &Table{
+		n: len(names),
+		//lookup:       lookup,
+		//permutations: permutations,
+		skips:   skips,
+		offsets: offsets,
+		m:       m,
 	}
+	lookup := t.populate(m, nil)
+	t.lookup = lookup
+
+	return t
 }
 
 func (t *Table) Lookup(key uint64) int {
@@ -32,42 +41,47 @@ func (t *Table) Lookup(key uint64) int {
 }
 
 func (t *Table) Rebuild(dead []int) {
-	t.lookup = populate(t.permutations, dead)
+	t.lookup = t.populate(t.m, dead)
 }
 
-func generatePermutations(names []string, M uint64) [][]uint64 {
-	permutations := make([][]uint64, len(names))
+func generatePermutations(names []string, M uint64) ([]uint64, []uint64) {
+	//permutations := make([][]uint64, len(names))
+	offsets := make([]uint64, len(names))
+	skips := make([]uint64, len(names))
 
 	for i, name := range names {
 		b := []byte(name)
 		h := siphash.Hash(0xdeadbeefcafebabe, 0, b)
-		offset, skip := (h>>32)%M, ((h&0xffffffff)%(M-1) + 1)
-		p := make([]uint64, M)
-		idx := offset
-		for j := uint64(0); j < M; j++ {
-			p[j] = idx
-			idx += skip
-			if idx >= M {
-				idx -= M
-			}
-		}
-		permutations[i] = p
+		offsets[i], skips[i] = (h>>32)%M, ((h&0xffffffff)%(M-1) + 1)
+
+		//p := make([]uint64, M)
+		//idx := offset
+		//for j := uint64(0); j < M; j++ {
+		//	p[j] = idx
+		//	idx += skip
+		//	if idx >= M {
+		//		idx -= M
+		//	}
+		//}
+		//permutations[i] = p
 	}
 
-	return permutations
+	return offsets, skips
+	//
+	//return permutations
 }
 
-func populate(permutation [][]uint64, dead []int) []int {
-	M := len(permutation[0])
-	N := len(permutation)
+func (t *Table) populate(M uint64, dead []int) []int {
+	//M := len(permutation[0]) // smallM
+	N := len(t.offsets) // len(names)
 
-	next := make([]uint64, N)
+	//next := make([]uint64, N)
 	entry := make([]int, M)
 	for j := range entry {
 		entry[j] = -1
 	}
 
-	var n int
+	var n uint64
 	for {
 		d := dead
 		for i := 0; i < N; i++ {
@@ -75,17 +89,28 @@ func populate(permutation [][]uint64, dead []int) []int {
 				d = d[1:]
 				continue
 			}
-			c := permutation[i][next[i]]
+
+			var c uint64
+			t.next(i, &c)
+
+			//c := permutation[i][next[i]]
 			for entry[c] >= 0 {
-				next[i]++
-				c = permutation[i][next[i]]
+				t.next(i, &c)
+				//next[i]++
+				//c = permutation[i][next[i]]
 			}
 			entry[c] = i
-			next[i]++
+			//next[i]++
 			n++
 			if n == M {
 				return entry
 			}
 		}
 	}
+}
+
+func (t *Table) next(i int, c *uint64)  {
+	*c = t.offsets[i]
+
+	t.offsets[i] = (t.offsets[i] + t.skips[i]) % t.m
 }

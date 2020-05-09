@@ -9,7 +9,7 @@ var total int
 
 func BenchmarkGenerate(b *testing.B) {
 
-	const size = 125
+	const size = 2000
 
 	var names []string
 	for i := 0; i < size; i++ {
@@ -19,7 +19,8 @@ func BenchmarkGenerate(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		p := generatePermutations(names, BigM)
-		total += len(p)
+		//table := New(names, SmallM)
+		offsets, _ := generatePermutations(names, BigM)
+		total += len(offsets)
 	}
 }

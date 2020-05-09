@@ -14,8 +14,6 @@ func TestPopulate(t *testing.T) {
 		"backend-2",
 	}, 7)
 
-	print("%v", table)
-
 	var tests = []struct {
 		dead []int
 		want []int
@@ -29,13 +27,25 @@ func TestPopulate(t *testing.T) {
 		{0, 5, 3, 1, 6, 4, 2},
 		{1, 3, 5, 0, 2, 4, 6},
 	}
+	newPermutations := [][]uint64{
+		make([]uint64, 7),
+		make([]uint64, 7),
+		make([]uint64, 7),
+	}
+	table.resetOffsets()
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 7; j++ {
+			table.next(i, &newPermutations[i][j])
+		}
+	}
 
-	if !reflect.DeepEqual(permutations, table.permutations) {
+	if !reflect.DeepEqual(permutations, newPermutations) {
+		t.Errorf("permutations=%v, want %v", newPermutations, permutations)
 		t.Errorf("1")
 	}
 
 	for _, tt := range tests {
-		if got := populate(permutations, tt.dead); !reflect.DeepEqual(got, tt.want) {
+		if got := table.populate(7, tt.dead); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("populate(...,%v)=%v, want %v", tt.dead, got, tt.want)
 		}
 	}

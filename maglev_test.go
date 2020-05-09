@@ -8,19 +8,30 @@ import (
 )
 
 func TestPopulate(t *testing.T) {
+	table := New([]string{
+		"backend-0",
+		"backend-1",
+		"backend-2",
+	}, 7)
+
+	print("%v", table)
 
 	var tests = []struct {
 		dead []int
 		want []int
 	}{
-		{nil, []int{1, 0, 1, 0, 2, 2, 0}},
-		{[]int{1}, []int{0, 0, 0, 0, 2, 2, 2}},
+		{nil, []int{1, 2, 0, 2, 0, 1, 0}},
+		{[]int{1}, []int{0, 2, 0, 2, 0, 2, 0}},
 	}
 
 	permutations := [][]uint64{
-		{3, 0, 4, 1, 5, 2, 6},
-		{0, 2, 4, 6, 1, 3, 5},
-		{3, 4, 5, 6, 0, 1, 2},
+		{2, 6, 3, 0, 4, 1, 5},
+		{0, 5, 3, 1, 6, 4, 2},
+		{1, 3, 5, 0, 2, 4, 6},
+	}
+
+	if !reflect.DeepEqual(permutations, table.permutations) {
+		t.Errorf("1")
 	}
 
 	for _, tt := range tests {

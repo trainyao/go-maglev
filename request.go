@@ -158,4 +158,6 @@ type RequestInfo interface {
 
 	// SetRouteEntry sets the route rule
 	SetRouteEntry(routerRule RouteRule)
+
+	SetProtocol(p Protocol)
 }

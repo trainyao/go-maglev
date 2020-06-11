@@ -16,6 +16,7 @@ func BenchmarkGenerate(b *testing.B) {
 	}
 
 	b.ResetTimer()
+	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
 		offsets, _ := generateOffsetAndSkips(names, SmallM)
@@ -32,6 +33,7 @@ func BenchmarkNew(b *testing.B) {
 	}
 
 	b.ResetTimer()
+	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
 		table := New(names, SmallM)
